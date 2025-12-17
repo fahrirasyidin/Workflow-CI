@@ -1,0 +1,57 @@
+name: Advance CI - Build & Push Docker
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    steps:
+    # 1. Ambil Kode
+    - name: Checkout Code
+      uses: actions/checkout@v3
+
+    # 2. Siapkan Python
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+
+    # 3. Install Library
+    - name: Install Dependencies
+      run: |
+        pip install mlflow pandas scikit-learn matplotlib seaborn virtualenv
+
+    # 4. Jalankan Training (Menghasilkan folder 'model_output')
+    - name: Train Model
+      run: |
+        cd MLProject
+        python modelling.py
+
+    # 5. Login ke Docker Hub (Menggunakan Secret yang tadi dibuat)
+    - name: Login to Docker Hub
+      uses: docker/login-action@v2
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+
+    # 6. Build Docker Image Menggunakan MLflow (INTI ADVANCE)
+    - name: Build Docker Image
+      run: |
+        # Perintah ini membungkus model menjadi Docker Image siap pakai
+        # Ganti 'transport-model' sesuai nama repo Docker Hub kamu jika beda
+        mlflow models build-docker \
+          -m MLProject/model_output \
+          -n ${{ secrets.DOCKER_USERNAME }}/transport-model:latest \
+          --enable-mlserver
+
+    # 7. Push Image ke Docker Hub
+    - name: Push to Docker Hub
+      run: |
+        docker push ${{ secrets.DOCKER_USERNAME }}/transport-model:latest
