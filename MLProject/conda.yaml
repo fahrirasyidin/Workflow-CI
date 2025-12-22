@@ -1,12 +1,10 @@
-name: transportation-env
+name: transport-env
 channels:
-  - conda-forge
+  - defaults
 dependencies:
   - python=3.9
   - pip
   - pip:
-    - mlflow
     - pandas
     - scikit-learn
-    - matplotlib
-    - seaborn
+    - mlflow
