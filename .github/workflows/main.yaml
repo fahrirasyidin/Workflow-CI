@@ -1,57 +1,38 @@
-name: Build & Push Docker
+name: MLflow Training Pipeline
 
 on:
   push:
-    branches: [ "main" ]
-  workflow_dispatch:
-
-permissions:
-  contents: write
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
 
 jobs:
-  build-and-push:
+  train-model:
     runs-on: ubuntu-latest
 
     steps:
-    # Ambil Kode
-    - name: Checkout Code
+    # Checkout Repository
+    - name: Checkout code
       uses: actions/checkout@v3
 
-    # Siapkan Python
-    - name: Set up Python
+    # Setup Python
+    - name: Set up Python 3.9
       uses: actions/setup-python@v4
       with:
         python-version: '3.9'
 
-    # Install Library
-    - name: Install Dependencies
+    # Install Dependencies
+    - name: Install dependencies
       run: |
-        pip install mlflow pandas scikit-learn matplotlib seaborn virtualenv
+        python -m pip install --upgrade pip
+        pip install mlflow pandas scikit-learn
+        # Jika ada requirements.txt, uncomment baris di bawah:
+        # pip install -r requirements.txt
 
-    # Jalankan Training
-    - name: Train Model
+    # Train Model menggunakan MLflow Run
+    - name: Run MLflow Project
       run: |
-        cd MLProject
-        python modelling.py
-
-    # Login ke Docker Hub
-    - name: Login to Docker Hub
-      uses: docker/login-action@v2
-      with:
-        username: ${{ secrets.DOCKER_USERNAME }}
-        password: ${{ secrets.DOCKER_PASSWORD }}
-
-    # Build Docker Image
-    - name: Build Docker Image
-      run: |
-        # Perintah ini membungkus model menjadi Docker Image siap pakai
-        # Ganti 'transport-model' sesuai nama repo Docker Hub kamu jika beda
-        mlflow models build-docker \
-          -m MLProject/model_output \
-          -n ${{ secrets.DOCKER_USERNAME }}/transport-model:latest \
-          --enable-mlserver
-
-    # Push ke Docker Hub
-    - name: Push to Docker Hub
-      run: |
-        docker push ${{ secrets.DOCKER_USERNAME }}/transport-model:latest
+        cd Workflow-CI/MLProject
+        mlflow run . --env-manager=local
