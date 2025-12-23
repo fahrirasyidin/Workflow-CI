@@ -26,8 +26,16 @@ jobs:
         python -m pip install --upgrade pip
         pip install mlflow pandas scikit-learn
 
+    - name: Debug Folder Structure
+      run: |
+        echo "=== LIST FILE DI FOLDER MLProject ==="
+        ls -R MLProject
+        echo "====================================="
+
     - name: Run MLflow Project
       run: |
-        # PERBAIKAN DI SINI: Langsung masuk ke folder MLProject
         cd MLProject
+        # HAPUS folder mlruns lama yang menyebabkan error
+        rm -rf mlruns
+        # Jalankan MLflow
         mlflow run . --env-manager=local
